@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RNA Sequencing Billing — Anderson Diagnostic Services</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --orange: #F37021;
+      --blue:   #1B3A6B;
+      --blue2:  #2d5fa0;
+      --light:  #f4f6fa;
+      --border: #b0b0b0;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--light);
+      color: #222;
+    }
+
+    /* ── App header ─────────────────────────────────────── */
+    .app-bar {
+      background: linear-gradient(135deg, var(--blue), var(--blue2));
+      color: #fff;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 3px 12px rgba(0,0,0,.25);
+    }
+    .app-bar h1  { font-size: 1.2rem; font-weight: 700; letter-spacing: .4px; }
+    .app-bar p   { font-size: .78rem; opacity: .8; margin-top: 2px; }
+    .app-logo {
+      width: 46px; height: 46px;
+      background: var(--orange);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 1rem; letter-spacing: 1px;
+      color: #fff;
+    }
+
+    /* ── Two-column layout ──────────────────────────────── */
+    .layout {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 18px;
+      padding: 18px;
+      max-width: 1380px;
+      margin: 0 auto;
+    }
+
+    /* ── Form panel ─────────────────────────────────────── */
+    .form-panel {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 14px rgba(0,0,0,.08);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 18px;
+      max-height: calc(100vh - 100px);
+      overflow: hidden;
+    }
+
+    .panel-hdr {
+      background: var(--blue);
+      color: #fff;
+      padding: 11px 18px;
+      font-size: .88rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      flex-shrink: 0;
+    }
+
+    .form-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px;
+    }
+
+    .sec-title {
+      font-size: .72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .9px;
+      color: var(--orange);
+      border-bottom: 2px solid var(--orange);
+      padding-bottom: 4px;
+      margin-bottom: 12px;
+    }
+
+    .form-section { margin-bottom: 20px; }
+
+    .fg { margin-bottom: 10px; }
+    .fg label {
+      display: block;
+      font-size: .74rem;
+      font-weight: 700;
+      color: #444;
+      margin-bottom: 4px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1.5px solid #d0d5dd;
+      border-radius: 6px;
+      font-size: .83rem;
+      font-family: inherit;
+      color: #222;
+      transition: border-color .18s;
+      background: #fff;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--blue); }
+
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* service row card */
+    .svc-card {
+      border: 1.5px solid #e0e4ee;
+      border-radius: 8px;
+      padding: 12px;
+      background: #fafbfd;
+      margin-bottom: 12px;
+    }
+    .svc-card-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .row-badge {
+      background: var(--blue);
+      color: #fff;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      font-size: .73rem;
+      font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn-rm {
+      background: #ff4d4f;
+      color: #fff;
+      border: none;
+      padding: 3px 9px;
+      border-radius: 4px;
+      font-size: .73rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-rm:hover { background: #cf1322; }
+    .row-subtotal {
+      background: #eaf6e9;
+      border: 1px solid #b7eb8f;
+      border-radius: 5px;
+      padding: 5px 10px;
+      font-size: .78rem;
+      font-weight: 700;
+      color: #237804;
+      margin-top: 8px;
+    }
+
+    .btn-add {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-add:hover { background: #143060; }
+
+    /* summary box */
+    .sum-box {
+      background: #f0f4fb;
+      border: 1.5px solid #c8d4f0;
+      border-radius: 8px;
+      padding: 13px 15px;
+      margin-top: 14px;
+    }
+    .sum-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: .83rem;
+      padding: 4px 0;
+      border-bottom: 1px solid #dde3f0;
+    }
+    .sum-row:last-child { border: none; }
+    .sum-row.sum-total {
+      font-weight: 800;
+      font-size: .96rem;
+      color: var(--blue);
+      padding-top: 8px;
+    }
+
+    /* action buttons */
+    .action-bar {
+      display: flex;
+      gap: 10px;
+      padding: 13px 18px;
+      border-top: 1px solid #eee;
+      flex-shrink: 0;
+    }
+    .btn-preview, .btn-dl {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 7px;
+      font-size: .87rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      transition: opacity .15s;
+    }
+    .btn-preview { background: var(--orange); color: #fff; }
+    .btn-preview:hover { opacity: .88; }
+    .btn-dl { background: #237804; color: #fff; }
+    .btn-dl:hover { opacity: .88; }
+    .btn-dl:disabled { opacity: .55; cursor: wait; }
+
+    /* ── Preview panel ───────────────────────────────────── */
+    .preview-panel {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 14px rgba(0,0,0,.08);
+      overflow: hidden;
+    }
+
+    .doc-wrap {
+      padding: 16px;
+      overflow: auto;
+      background: #e8eaf0;
+    }
+
+    /* ── Quotation Document ──────────────────────────────── */
+    #quotation-doc {
+      font-family: Arial, 'Helvetica Neue', sans-serif;
+      font-size: 13px;
+      color: #111;
+      background: #fff;
+    }
+
+    .q-page {
+      background: #fff;
+      width: 794px;      /* A4 at 96 dpi */
+      min-height: 1123px;
+      padding: 32px 36px;
+      margin: 0 auto 4px;
+      page-break-after: always;
+    }
+    .q-page:last-child { page-break-after: avoid; }
+
+    /* header */
+    .q-hdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2.5px solid var(--orange);
+      padding-bottom: 10px;
+      margin-bottom: 8px;
+    }
+    .q-hdr-left h2 {
+      color: var(--blue);
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: .4px;
+    }
+    .q-hdr-left p {
+      font-size: 10.5px;
+      color: #555;
+      line-height: 1.6;
+      margin-top: 3px;
+    }
+    .q-logo-box {
+      background: var(--orange);
+      color: #fff;
+      padding: 5px 13px;
+      border-radius: 6px;
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: 1px;
+      display: inline-block;
+    }
+    .q-logo-tag {
+      font-size: 9.5px;
+      color: #777;
+      margin-top: 3px;
+      text-align: right;
+      font-style: italic;
+    }
+
+    .q-title {
+      text-align: center;
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      margin: 14px 0 5px;
+    }
+    .q-date { text-align: right; font-size: 12px; margin-bottom: 14px; }
+
+    /* from/to */
+    .ft-table { width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 12px; }
+    .ft-table td {
+      border: 1.5px solid #888;
+      padding: 10px 13px;
+      vertical-align: top;
+      width: 50%;
+    }
+    .ft-table td b { display: block; margin-bottom: 4px; }
+
+    /* services table */
+    .svc-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .svc-table th {
+      background: #f5f5f5;
+      border: 1.5px solid #888;
+      padding: 7px 9px;
+      text-align: center;
+      font-weight: 800;
+    }
+    .svc-table td {
+      border: 1.5px solid #888;
+      padding: 7px 9px;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .svc-table td.al { text-align: left; }
+    .svc-table td.ar { text-align: right; padding-right: 12px; font-weight: 700; }
+    .svc-table td.ar2 { text-align: right; padding-right: 10px; }
+    .svc-table tr.tot-row td { background: #efefef; font-weight: 800; }
+
+    /* signature */
+    .sig-area { margin-top: 32px; text-align: right; font-size: 12px; line-height: 1.7; }
+
+    /* terms page */
+    .terms h2 { color: var(--orange); font-size: 15px; margin-bottom: 12px; }
+    .terms h3 { color: var(--orange); font-size: 13px; margin: 14px 0 6px; }
+    .terms p, .terms li { font-size: 12px; line-height: 1.7; }
+    .terms ol { padding-left: 20px; }
+    .terms li { margin-bottom: 6px; }
+    .pay-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+    .pay-table td { border: 1.5px solid #888; padding: 6px 12px; }
+    .pay-table td:first-child { font-weight: 800; background: #f5f5f5; width: 36%; }
+
+    /* ── Modal ───────────────────────────────────────────── */
+    .modal-bg {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.72);
+      z-index: 999;
+      padding: 30px 20px;
+      overflow-y: auto;
+    }
+    .modal-bg.open { display: block; }
+    .modal-box {
+      background: #fff;
+      max-width: 870px;
+      margin: 0 auto;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,.4);
+    }
+    .modal-hdr {
+      background: var(--blue);
+      color: #fff;
+      padding: 11px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: .9rem;
+      font-weight: 700;
+    }
+    .btn-close {
+      background: none; border: none; color: #fff;
+      font-size: 1.5rem; cursor: pointer; line-height: 1;
+    }
+    .modal-body { padding: 16px; overflow: auto; background: #e8eaf0; }
+
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+      .form-panel { position: static; max-height: none; }
+    }
+
+    @media print {
+      html, body { background: #fff !important; }
+      .app-bar, .form-panel, .modal-bg, .panel-hdr { display: none !important; }
+      .layout { display: block; padding: 0; }
+      .preview-panel { box-shadow: none; border-radius: 0; }
+      .doc-wrap { padding: 0; background: #fff; }
+      .q-page { margin: 0; width: 100%; min-height: auto; padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- App Bar -->
+<div class="app-bar">
+  <div>
+    <h1>RNA Sequencing Billing Generator</h1>
+    <p>Anderson Diagnostic Services Pvt. Ltd.</p>
+  </div>
+  <div class="app-logo">A</div>
+</div>
+
+<div class="layout">
+
+  <!-- ═══════════════  FORM PANEL  ═══════════════ -->
+  <aside class="form-panel">
+    <div class="panel-hdr">Quotation Details</div>
+
+    <div class="form-scroll">
+
+      <!-- Quote Info -->
+      <div class="form-section">
+        <div class="sec-title">Quote Information</div>
+        <div class="grid2">
+          <div class="fg">
+            <label>Date</label>
+            <input type="date" id="quoteDate" />
+          </div>
+          <div class="fg">
+            <label>Quote No. (optional)</label>
+            <input type="text" id="quoteNo" placeholder="e.g. Q-2025-001" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Quotation To -->
+      <div class="form-section">
+        <div class="sec-title">Quotation To</div>
+        <div class="fg">
+          <label>Name</label>
+          <input type="text" id="toName" placeholder="e.g. Dr. Murali TS" />
+        </div>
+        <div class="fg">
+          <label>Designation</label>
+          <input type="text" id="toDesig" placeholder="e.g. Professor and Head" />
+        </div>
+        <div class="fg">
+          <label>Department</label>
+          <input type="text" id="toDept" placeholder="e.g. Department of Public Health Genomics" />
+        </div>
+        <div class="fg">
+          <label>School / Faculty (optional)</label>
+          <input type="text" id="toSchool" placeholder="e.g. Manipal School of Life Sciences" />
+        </div>
+        <div class="fg">
+          <label>Institution</label>
+          <input type="text" id="toInst" placeholder="e.g. Manipal Academy of Higher Education" />
+        </div>
+        <div class="grid2">
+          <div class="fg">
+            <label>City</label>
+            <input type="text" id="toCity" placeholder="e.g. Manipal" />
+          </div>
+          <div class="fg">
+            <label>State &amp; PIN</label>
+            <input type="text" id="toPin" placeholder="e.g. Karnataka – 576104" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Services -->
+      <div class="form-section">
+        <div class="sec-title">Service Details</div>
+        <div id="svcRows"></div>
+        <button class="btn-add" onclick="addRow()">+ Add Service Row</button>
+      </div>
+
+      <!-- Summary -->
+      <div class="sum-box">
+        <div class="sum-row"><span>Sub Total</span><span id="s-sub">₹ 0</span></div>
+        <div class="sum-row"><span>9% CGST</span><span id="s-cgst">₹ 0</span></div>
+        <div class="sum-row"><span>9% IGST</span><span id="s-igst">₹ 0</span></div>
+        <div class="sum-row sum-total"><span>Total Cost</span><span id="s-total">₹ 0</span></div>
+      </div>
+
+    </div><!-- /form-scroll -->
+
+    <div class="action-bar">
+      <button class="btn-preview" onclick="openPreview()">&#128065; Preview</button>
+      <button class="btn-dl" id="dlBtn" onclick="downloadPDF()">&#11015; Download PDF</button>
+    </div>
+  </aside>
+
+  <!-- ═══════════════  LIVE PREVIEW  ═══════════════ -->
+  <section class="preview-panel">
+    <div class="panel-hdr">Live Preview</div>
+    <div class="doc-wrap">
+      <div id="quotation-doc">
+
+        <!-- PAGE 1 -->
+        <div class="q-page">
+          <div class="q-hdr">
+            <div class="q-hdr-left">
+              <h2>Anderson Diagnostic Services Pvt. Ltd.</h2>
+              <p>
+                CIN: U85100TN2011PTC082643 / GSTIN/UIN: 33AAKCA0333K1ZY<br>
+                Reg Off: 150, Poonamallee High Road, Chennai‑600 084.<br>
+                Phone: 044‑4353 9444 &nbsp;|&nbsp; Email: info@andersondiagnostics.com<br>
+                www.andersondiagnostics.com
+              </p>
+            </div>
+            <div>
+              <div class="q-logo-box">anderson</div>
+              <div class="q-logo-tag">Diagnostics &amp; Labs<br>Adding Health to Life...</div>
+            </div>
+          </div>
+
+          <div class="q-title">QUOTATION</div>
+          <div class="q-date">Date: <span id="p-date">—</span>&emsp;<span id="p-quoteNo"></span></div>
+
+          <table class="ft-table">
+            <tr>
+              <td>
+                <b>From,</b>
+                Anderson Diagnostic Services Private Limited,<br>
+                No.26, Rajaratnam Street, Kilpauk,<br>
+                Chennai – 600 010
+              </td>
+              <td>
+                <b>Quotation to,</b>
+                <span id="p-to">—</span>
+              </td>
+            </tr>
+          </table>
+
+          <table class="svc-table">
+            <thead>
+              <tr>
+                <th style="width:5%">S.No</th>
+                <th style="width:35%">Service Description</th>
+                <th style="width:15%">Sample Type</th>
+                <th style="width:15%">No. of sample</th>
+                <th style="width:15%">Price</th>
+                <th style="width:15%">Total Price</th>
+              </tr>
+            </thead>
+            <tbody id="p-rows">
+              <tr>
+                <td>—</td><td class="al">—</td><td>—</td><td>—</td><td>—</td><td>—</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr><td colspan="5" class="ar">Sub Total</td><td class="ar2" id="p-sub">0</td></tr>
+              <tr><td colspan="5" class="ar">9% CGST</td><td class="ar2" id="p-cgst">0</td></tr>
+              <tr><td colspan="5" class="ar">9% IGST</td><td class="ar2" id="p-igst">0</td></tr>
+              <tr class="tot-row"><td colspan="5" class="ar">Total Cost</td><td class="ar2" id="p-total">0</td></tr>
+            </tfoot>
+          </table>
+
+          <div class="sig-area">
+            <p>Thanks &amp; Regards,</p>
+            <br><br>
+            <p>Sivaraman .J<br>Operations – Head<br>Anderson Diagnostic Services Pvt Ltd.</p>
+            <br>
+            <p><b>Authorized Signatory</b></p>
+          </div>
+        </div><!-- /page 1 -->
+
+        <!-- PAGE 2 — Terms & Conditions -->
+        <div class="q-page terms">
+          <div class="q-hdr">
+            <div class="q-hdr-left">
+              <h2>Anderson Diagnostic Services Pvt. Ltd.</h2>
+              <p>
+                CIN: U85100TN2011PTC082643 / GSTIN/UIN: 33AAKCA0333K1ZY<br>
+                Reg Off: 150, Poonamallee High Road, Chennai‑600 084.<br>
+                Phone: 044‑4353 9444 &nbsp;|&nbsp; Email: info@andersondiagnostics.com
+              </p>
+            </div>
+            <div>
+              <div class="q-logo-box">anderson</div>
+              <div class="q-logo-tag">Diagnostics &amp; Labs<br>Adding Health to Life...</div>
+            </div>
+          </div>
+
+          <h2 style="margin-top:18px">Terms and conditions:</h2>
+          <ol>
+            <li>Performance of Services — Sample Collection and preparation will be communicated separately.</li>
+            <li>Turn Around time (TAT) — Turn Around time mentioned herein is applicable after sample reaches our Genetics Lab located at Chennai. Turnaround time does not include Sundays and public holidays.</li>
+            <li>
+              <b>Prices and Terms</b>
+              <ol type="a" style="margin-top:5px">
+                <li>Prices are quoted in Rupees and are valid for thirty (30) days after the quote date, unless stated otherwise.</li>
+                <li>Prices are subject to change with due consultation and represents Anderson's best estimate on the Customers project needs.</li>
+                <li>Price is subjected to change by mutual understanding based upon availability of reagent etc.</li>
+                <li>Extraordinary material handling, protocol or report revisions and consultations may incur additional fees. All orders are subject to final acceptance by Anderson.</li>
+                <li>The client will not be charged for unrepeatable samples.</li>
+              </ol>
+            </li>
+          </ol>
+
+          <h3>4. Payment Terms:</h3>
+          <ol type="a">
+            <li>Payment should be made in advance payment of 100%</li>
+            <li>Cheque / DD in favor of ANDERSONDIAGNOSTICSERVICESPVTLTD, Payable at Chennai</li>
+          </ol>
+
+          <table class="pay-table" style="margin-top:12px">
+            <tr><td>Cheque Favor</td><td>Anderson Diagnostic Services Private Limited</td></tr>
+            <tr><td>Bank Name</td><td>ICICI Bank Limited</td></tr>
+            <tr><td>Account No</td><td>000105036373</td></tr>
+            <tr><td>IFSC Code</td><td>ICICI0000001</td></tr>
+            <tr><td>Branch Name</td><td>CENOTAPH ROAD – CHENNAI</td></tr>
+            <tr><td>MSME Number</td><td>UDYAM-TN-02-0014425</td></tr>
+            <tr><td>GSTN</td><td>33AAKCA0333K1ZY</td></tr>
+          </table>
+
+          <div class="sig-area" style="margin-top:28px">
+            <p>Thanks &amp; Regards,</p>
+            <br><br>
+            <p>Sivaraman .J<br>Operations – Head<br>Anderson Diagnostic Services Pvt Ltd.</p>
+            <br>
+            <p><b>Authorized Signatory</b></p>
+          </div>
+        </div><!-- /page 2 -->
+
+      </div><!-- /quotation-doc -->
+    </div>
+  </section>
+
+</div><!-- /layout -->
+
+<!-- ═══════════════  MODAL  ═══════════════ -->
+<div class="modal-bg" id="modal">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <span>Quotation Preview</span>
+      <button class="btn-close" onclick="closePreview()" title="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+  /* ── state ──────────────────────────────────────────── */
+  let rowSeq = 0;
+
+  /* ── helpers ────────────────────────────────────────── */
+  const $ = id => document.getElementById(id);
+
+  function inr(n) {
+    return Number.isFinite(n) && n > 0
+      ? n.toLocaleString('en-IN', { maximumFractionDigits: 0 })
+      : '0';
+  }
+
+  function fmtDate(val) {
+    if (!val) return '—';
+    const [y, m, d] = val.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  /* ── add/remove service rows ────────────────────────── */
+  function addRow() {
+    rowSeq++;
+    const id = rowSeq;
+    const wrap = $('svcRows');
+
+    const card = document.createElement('div');
+    card.className = 'svc-card';
+    card.id = `row_${id}`;
+    card.innerHTML = `
+      <div class="svc-card-hdr">
+        <div class="row-badge">${id}</div>
+        ${id > 1 ? `<button class="btn-rm" onclick="removeRow(${id})">Remove</button>` : '<span></span>'}
+      </div>
+      <div class="fg">
+        <label>Service Description</label>
+        <select id="sd_${id}" onchange="refresh()">
+          <option value="">— Select Service —</option>
+          <option value="RNA sequencing with library preparation &amp; analysis">RNA sequencing with library preparation &amp; analysis</option>
+          <option value="RNA sequencing with analysis">RNA sequencing with analysis</option>
+        </select>
+      </div>
+      <div class="grid2">
+        <div class="fg">
+          <label>Sample Type</label>
+          <input type="text" id="st_${id}" placeholder="e.g. Blood" oninput="refresh()">
+        </div>
+        <div class="fg">
+          <label>No. of Samples</label>
+          <input type="number" id="ns_${id}" placeholder="e.g. 4" min="1" oninput="refresh()">
+        </div>
+      </div>
+      <div class="fg">
+        <label>Price per Sample (₹)</label>
+        <input type="number" id="pr_${id}" placeholder="e.g. 13500" min="0" oninput="refresh()">
+      </div>
+      <div class="row-subtotal" id="rt_${id}">Row Total: ₹ 0</div>
+    `;
+    wrap.appendChild(card);
+    refresh();
+  }
+
+  function removeRow(id) {
+    $(`row_${id}`).remove();
+    refresh();
+  }
+
+  /* ── collect all row data ───────────────────────────── */
+  function getRows() {
+    const rows = [];
+    document.querySelectorAll('[id^="row_"]').forEach(card => {
+      const id = card.id.split('_')[1];
+      const desc      = ($(`sd_${id}`)?.value || '').replace(/&amp;/g, '&');
+      const sType     = $(`st_${id}`)?.value || '';
+      const nSamples  = parseFloat($(`ns_${id}`)?.value) || 0;
+      const price     = parseFloat($(`pr_${id}`)?.value) || 0;
+      const rowTotal  = nSamples * price;
+
+      const rtEl = $(`rt_${id}`);
+      if (rtEl) rtEl.textContent = `Row Total: ₹ ${inr(rowTotal)}`;
+
+      rows.push({ id, desc, sType, nSamples, price, rowTotal });
+    });
+    return rows;
+  }
+
+  /* ── refresh preview + sidebar ──────────────────────── */
+  function refresh() {
+    const rows    = getRows();
+    const sub     = rows.reduce((s, r) => s + r.rowTotal, 0);
+    const cgst    = sub * 0.09;
+    const igst    = sub * 0.09;
+    const total   = sub + cgst + igst;
+
+    /* sidebar */
+    $('s-sub').textContent   = `₹ ${inr(sub)}`;
+    $('s-cgst').textContent  = `₹ ${inr(cgst)}`;
+    $('s-igst').textContent  = `₹ ${inr(igst)}`;
+    $('s-total').textContent = `₹ ${inr(total)}`;
+
+    /* date & quote no */
+    $('p-date').textContent   = fmtDate($('quoteDate').value);
+    const qn = $('quoteNo').value.trim();
+    $('p-quoteNo').textContent = qn ? `Quote No: ${qn}` : '';
+
+    /* "to" block */
+    const fields = [
+      $('toName').value,
+      $('toDesig').value,
+      $('toDept').value,
+      $('toSchool').value,
+      $('toInst').value,
+    ].filter(Boolean).map(v => v + ',');
+    const loc = [$('toCity').value, $('toPin').value].filter(Boolean).join(', ');
+    if (loc) fields.push(loc);
+    $('p-to').innerHTML = fields.join('<br>') || '—';
+
+    /* service rows in preview */
+    if (!rows.length) {
+      $('p-rows').innerHTML =
+        '<tr><td>—</td><td class="al">—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>';
+    } else {
+      $('p-rows').innerHTML = rows.map((r, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td class="al">${r.desc || '—'}</td>
+          <td>${r.sType || '—'}</td>
+          <td>${r.nSamples || '—'}</td>
+          <td>${r.price ? inr(r.price) : '—'}</td>
+          <td>${r.rowTotal ? inr(r.rowTotal) : '—'}</td>
+        </tr>
+      `).join('');
+    }
+
+    /* totals */
+    $('p-sub').textContent   = inr(sub);
+    $('p-cgst').textContent  = inr(cgst);
+    $('p-igst').textContent  = inr(igst);
+    $('p-total').textContent = inr(total);
+  }
+
+  /* ── modal preview ──────────────────────────────────── */
+  function openPreview() {
+    $('modal-body').innerHTML = $('quotation-doc').outerHTML;
+    $('modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePreview() {
+    $('modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  $('modal').addEventListener('click', e => {
+    if (e.target === $('modal')) closePreview();
+  });
+
+  /* ── download PDF ───────────────────────────────────── */
+  async function downloadPDF() {
+    const btn = $('dlBtn');
+    btn.disabled = true;
+    btn.textContent = 'Generating…';
+
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = $('quotation-doc');
+
+      const canvas = await html2canvas(doc, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+
+      const A4_W = 210;   // mm
+      const A4_H = 297;
+      const pdf  = new jsPDF('p', 'mm', 'a4');
+
+      const imgW   = canvas.width;
+      const imgH   = canvas.height;
+      const pxPerMm = imgW / A4_W;
+      const pageH_px = A4_H * pxPerMm;
+
+      let yPx = 0;
+      let page = 0;
+
+      while (yPx < imgH) {
+        if (page > 0) pdf.addPage();
+
+        const sliceH = Math.min(pageH_px, imgH - yPx);
+        const slice  = document.createElement('canvas');
+        slice.width  = imgW;
+        slice.height = sliceH;
+        slice.getContext('2d').drawImage(canvas, 0, yPx, imgW, sliceH, 0, 0, imgW, sliceH);
+
+        pdf.addImage(slice.toDataURL('image/png'), 'PNG', 0, 0, A4_W, (sliceH / pxPerMm));
+        yPx += pageH_px;
+        page++;
+      }
+
+      const dateStr = ($('quoteDate').value || 'date').replace(/-/g, '');
+      const name    = ($('toName').value || 'Client').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+      pdf.save(`Anderson_RNASeq_Quote_${name}_${dateStr}.pdf`);
+
+    } catch (err) {
+      alert('PDF generation failed.\n\nYou can also use Ctrl+P and "Save as PDF" as a fallback.\n\nError: ' + err.message);
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '&#11015; Download PDF';
+  }
+
+  /* ── wire up all text inputs ────────────────────────── */
+  ['quoteDate','quoteNo','toName','toDesig','toDept','toSchool','toInst','toCity','toPin']
+    .forEach(id => $(id).addEventListener('input', refresh));
+
+  /* ── init ───────────────────────────────────────────── */
+  document.addEventListener('DOMContentLoaded', () => {
+    $('quoteDate').valueAsDate = new Date();
+    addRow();
+  });
+</script>
+</body>
+</html>
