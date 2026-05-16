@@ -1334,10 +1334,14 @@
                 $('mail-to').focus();
                 return;
             }
-            const mailto = 'mailto:' + encodeURIComponent(to) +
-                '?subject=' + encodeURIComponent(subject) +
-                '&body='    + encodeURIComponent(body);
-            window.location.href = mailto;
+
+            // Open Gmail compose in a new tab
+            const gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1'
+                + '&to='   + encodeURIComponent(to)
+                + '&su='   + encodeURIComponent(subject)
+                + '&body=' + encodeURIComponent(body);
+
+            window.open(gmailUrl, '_blank');
         }
 
         $('mail-modal').addEventListener('click', e => {
