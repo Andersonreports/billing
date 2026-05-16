@@ -504,8 +504,8 @@
         }
         .sig-area img {
             display: inline-block;
-            width: 130px;
-            height: auto;
+            height: 90px;
+            width: auto;
         }
 
         /* terms page */
@@ -1127,7 +1127,14 @@
                     data.rows.forEach(r => {
                         addRow();
                         const id = rowSeq;
-                        $(`sd_${id}`).value = r.desc;
+                        const sel = $(`sd_${id}`);
+                        // Try setting the select value; if no matching option, use custom
+                        sel.value = r.desc;
+                        if (sel.value !== r.desc) {
+                            sel.value = '__custom__';
+                            if ($(`sd_custom_${id}`)) $(`sd_custom_${id}`).value = r.desc;
+                        }
+                        toggleCustom(id);
                         $(`st_${id}`).value = r.sType;
                         $(`ns_${id}`).value = r.nSamples;
                         $(`pr_${id}`).value = r.price;
