@@ -505,7 +505,7 @@
 
         .sig-area img {
             display: inline-block;
-            width: 220px;
+            width: 160px;
             height: auto;
         }
 
@@ -1137,15 +1137,13 @@
                     $('cfgName').value = data.settings.name || 'Anderson Diagnostic Services Private Limited';
                     $('cfgAddr1').value = data.settings.addr1 || 'No.26, Rajaratnam Street, Kilpauk';
                     $('cfgAddr2').value = data.settings.addr2 || '';
-                    $('cfgCity').value = data.settings.city || 'Chennai â€“ 600 010';
+                    $('cfgCity').value = data.settings.city || 'Chennai – 600 010';
                 } else {
-                    // Defaults
                     $('cfgName').value = 'Anderson Diagnostic Services Private Limited';
                     $('cfgAddr1').value = 'No.26, Rajaratnam Street, Kilpauk';
                     $('cfgAddr2').value = '';
-                    $('cfgCity').value = 'Chennai â€“ 600 010';
+                    $('cfgCity').value = 'Chennai – 600 010';
                 }
-                if (data.rows && data.rows.length > 0) {
                 if (data.rows && data.rows.length > 0) {
                     _loading = true;
                     $('svcRows').innerHTML = '';
@@ -1153,21 +1151,22 @@
                     data.rows.forEach(r => {
                         addRow();
                         const id = rowSeq;
-                        const sel = $(sd_${id});
+                        const sel = document.getElementById('sd_' + id);
                         if (sel) {
                             sel.value = r.desc;
                             if (sel.value !== r.desc) {
                                 sel.value = '__custom__';
-                                const ci = $(sd_custom_${id});
+                                const ci = document.getElementById('sd_custom_' + id);
                                 if (ci) ci.value = r.desc;
                             }
                             toggleCustom(id);
                         }
-                        if ($(st_${id})) $(st_${id}).value = r.sType;
-                        if ($(
-s_${id})) $(
-s_${id}).value = r.nSamples;
-                        if ($(pr_${id})) $(pr_${id}).value = r.price;
+                        const st = document.getElementById('st_' + id);
+                        const ns = document.getElementById('ns_' + id);
+                        const pr = document.getElementById('pr_' + id);
+                        if (st) st.value = r.sType;
+                        if (ns) ns.value = r.nSamples;
+                        if (pr) pr.value = r.price;
                     });
                     _loading = false;
                 }
