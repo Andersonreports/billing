@@ -875,6 +875,7 @@
             <div class="action-bar">
                 <button class="btn-preview" onclick="openMailModal()">&#9993; Draft Mail</button>
                 <button class="btn-dl" id="dlBtn" onclick="downloadPDF()">&#11015; Download PDF</button>
+                <button onclick="resetApp()" style="flex:0;padding:10px 14px;border:1px solid #ccc;border-radius:7px;background:#fff;cursor:pointer;font-size:.8rem;color:#555;" title="Clear all data and reset">&#8635; Reset</button>
             </div>
         </aside>
         <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•  LIVE PREVIEW  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
@@ -1401,11 +1402,29 @@
         ['quoteDate', 'quoteNo', 'toName', 'toDesig', 'toDept', 'toSchool', 'toInst', 'toCity', 'toPin']
             .forEach(id => $(id).addEventListener('input', refresh));
         /* â”€â”€ init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+        function resetApp() {
+            try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+            $('svcRows').innerHTML = '';
+            rowSeq = 0;
+            ['quoteDate','quoteNo','toName','toDesig','toDept','toSchool','toInst','toCity','toPin']
+                .forEach(id => { if ($(id)) $(id).value = ''; });
+            $('quoteDate').valueAsDate = new Date();
+            addRow();
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
-            if (!loadData()) {
+            try {
+                if (!loadData()) {
+                    $('quoteDate').valueAsDate = new Date();
+                    addRow();
+                }
+            } catch(e) {
+                console.warn('Init failed, resetting:', e);
+                try { localStorage.removeItem(STORAGE_KEY); } catch(_) {}
                 $('quoteDate').valueAsDate = new Date();
-                addRow();
+                if (!$('svcRows').children.length) addRow();
             }
+            refresh();
         });
     </script>
 </body>
