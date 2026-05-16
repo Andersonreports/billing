@@ -368,8 +368,9 @@
             /* A4 at 96 dpi */
             min-height: 1123px;
             padding: 32px 36px;
-            margin: 0 auto 4px;
+            margin: 0 auto 28px;
             page-break-after: always;
+            box-shadow: 0 2px 12px rgba(0,0,0,.15);
         }
 
         .q-page:last-child {
@@ -499,13 +500,15 @@
         /* signature */
         .sig-area {
             margin-top: 36px;
-            text-align: right;
+            margin-left: auto;
+            width: fit-content;
+            text-align: left;
             font-size: 13px;
             line-height: 1.8;
         }
         .sig-area p { margin: 0; }
         .sig-area img {
-            display: inline-block;
+            display: block;
             height: 100px;
             width: auto;
             margin-top: 16px;
