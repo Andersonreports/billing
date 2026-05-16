@@ -1243,7 +1243,7 @@
         /* — collect all row data — */
         function getRows() {
             const rows = [];
-            document.querySelectorAll('[id^=â€row_â€]').forEach(card => {
+            document.querySelectorAll('[id^="row_"]').forEach(card => {
                 const id = card.id.split('_')[1];
                 const sel = $(`sd_${id}`)?.value || '';
                 const desc = (sel === '__custom__'
