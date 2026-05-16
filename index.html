@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Anderson Billing — Anderson Diagnostic Services</title>
+    <title>Anderson Research Sample Billing — Anderson Diagnostic Services</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
@@ -721,7 +721,8 @@
         }
 
         /* Generous Spacing for Premium Look */
-        #quotation-doc {
+        #quotation-doc,
+        #quotation-doc * {
             font-family: 'Times New Roman', Times, serif !important;
         }
 
@@ -773,7 +774,7 @@
         <div style="display: flex; align-items: center; gap: 15px;">
             <div class="app-logo">A</div>
             <div>
-                <h1>Anderson Billing</h1>
+                <h1>Anderson Research Sample Billing</h1>
                 <p>Anderson Diagnostic Services Internal Generator</p>
             </div>
         </div>
@@ -1164,11 +1165,16 @@
         </div>
         <div class="fg">
             <label>Service Description</label>
-            <select id="sd_${id}" onchange="refresh()">
+            <select id="sd_${id}" onchange="toggleCustom(${id}); refresh();">
                 <option value="">— Select Service —</option>
                 <option value="RNA sequencing with library preparation &amp; analysis">RNA sequencing with library preparation &amp; analysis</option>
-                <option value="RNA sequencing with analysis">RNA sequencing with analysis</option>
+                <option value="RNA sequencing without analysis">RNA sequencing without analysis</option>
+                <option value="__custom__">Other (type below)</option>
             </select>
+        </div>
+        <div class="fg" id="sd_custom_wrap_${id}" style="display:none">
+            <label>Custom Service Description</label>
+            <input type="text" id="sd_custom_${id}" placeholder="Type service description..." oninput="refresh()">
         </div>
         <div class="grid2">
             <div class="fg">
@@ -1193,12 +1199,21 @@
             $(`row_${id}`).remove();
             refresh();
         }
-        /* â”€â”€ collect all row data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+        function toggleCustom(id) {
+            const sel  = $(`sd_${id}`);
+            const wrap = $(`sd_custom_wrap_${id}`);
+            if (!sel || !wrap) return;
+            wrap.style.display = sel.value === '__custom__' ? 'block' : 'none';
+        }
+        /* — collect all row data — */
         function getRows() {
             const rows = [];
-            document.querySelectorAll('[id^="row_"]').forEach(card => {
-                const id = card.id.split('_')[1];
-                const desc = ($(`sd_${id}`)?.value || '').replace(/&amp;/g, '&');
+            document.querySelectorAll('[id^=”row_”]').forEach(card => {
+                const id  = card.id.split('_')[1];
+                const sel = $(`sd_${id}`)?.value || '';
+                const desc = (sel === '__custom__'
+                    ? ($(`sd_custom_${id}`)?.value || '')
+                    : sel).replace(/&amp;/g, '&');
                 const sType = $(`st_${id}`)?.value || '';
                 const nSamples = parseFloat($(`ns_${id}`)?.value) || 0;
                 const price = parseFloat($(`pr_${id}`)?.value) || 0;
