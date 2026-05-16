@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RNA Sequencing Billing Anderson Diagnostic Services</title>
+    <title>Anderson Billing — Anderson Diagnostic Services</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
@@ -785,7 +785,7 @@
         <div style="display: flex; align-items: center; gap: 15px;">
             <div class="app-logo">A</div>
             <div>
-                <h1>RNA Sequencing Billing</h1>
+                <h1>Anderson Billing</h1>
                 <p>Anderson Diagnostic Services Internal Generator</p>
             </div>
         </div>
@@ -1363,39 +1363,30 @@
         async function downloadPDF() {
             const btn = $('dlBtn');
             btn.disabled = true;
-            btn.textContent = 'Generatingâ€¦';
+            btn.textContent = 'Generating...';
             try {
                 const { jsPDF } = window.jspdf;
-                const doc = $('quotation-doc');
-                const canvas = await html2canvas(doc, {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: '#ffffff',
-                    logging: false,
-                });
-                const A4_W = 210;   // mm
-                const A4_H = 297;
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const imgW = canvas.width;
-                const imgH = canvas.height;
-                const pxPerMm = imgW / A4_W;
-                const pageH_px = A4_H * pxPerMm;
-                let yPx = 0;
-                let page = 0;
-                while (yPx < imgH) {
-                    if (page > 0) pdf.addPage();
-                    const sliceH = Math.min(pageH_px, imgH - yPx);
-                    const slice = document.createElement('canvas');
-                    slice.width = imgW;
-                    slice.height = sliceH;
-                    slice.getContext('2d').drawImage(canvas, 0, yPx, imgW, sliceH, 0, 0, imgW, sliceH);
-                    pdf.addImage(slice.toDataURL('image/png'), 'PNG', 0, 0, A4_W, (sliceH / pxPerMm));
-                    yPx += pageH_px;
-                    page++;
+                const pdf  = new jsPDF('p', 'mm', 'a4');
+                const A4_W = 210, A4_H = 297;
+
+                // Capture each page separately — prevents page 2 header
+                // bleeding into the bottom of PDF page 1
+                const pages = document.querySelectorAll('#quotation-doc .q-page');
+                for (let i = 0; i < pages.length; i++) {
+                    if (i > 0) pdf.addPage();
+                    const canvas = await html2canvas(pages[i], {
+                        scale: 2,
+                        useCORS: true,
+                        backgroundColor: '#ffffff',
+                        logging: false,
+                    });
+                    // Stretch each page canvas to fill A4 exactly
+                    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, A4_W, A4_H);
                 }
+
                 const dateStr = ($('quoteDate').value || 'date').replace(/-/g, '');
-                const name = ($('toName').value || 'Client').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-                pdf.save(`Anderson_RNASeq_Quote_${name}_${dateStr}.pdf`);
+                const name    = ($('toName').value || 'Client').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                pdf.save(`Anderson_Quote_${name}_${dateStr}.pdf`);
             } catch (err) {
                 alert('PDF generation failed.\n\nYou can also use Ctrl+P and "Save as PDF" as a fallback.\n\nError: ' + err.message);
             }
