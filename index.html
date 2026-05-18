@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -1066,7 +1066,8 @@
                 </div>
                 <div class="mail-field">
                     <label>CC</label>
-                    <input type="text" id="mail-cc" value="genetics@andersondiagnostics.in, sachin@andersondiagnostics.com" />
+                    <input type="text" id="mail-cc"
+                        value="genetics@andersondiagnostics.in, sachin@andersondiagnostics.com" />
                 </div>
                 <div class="mail-field">
                     <label>To (Recipient)</label>
@@ -1139,12 +1140,12 @@
                     $('cfgName').value = data.settings.name || 'Anderson Diagnostic Services Private Limited';
                     $('cfgAddr1').value = data.settings.addr1 || 'No.26, Rajaratnam Street, Kilpauk';
                     $('cfgAddr2').value = data.settings.addr2 || '';
-                    $('cfgCity').value = data.settings.city || 'Chennai – 600 010';
+                    $('cfgCity').value = data.settings.city || 'Chennai  600 010';
                 } else {
                     $('cfgName').value = 'Anderson Diagnostic Services Private Limited';
                     $('cfgAddr1').value = 'No.26, Rajaratnam Street, Kilpauk';
                     $('cfgAddr2').value = '';
-                    $('cfgCity').value = 'Chennai – 600 010';
+                    $('cfgCity').value = 'Chennai  600 010';
                 }
                 if (data.rows && data.rows.length > 0) {
                     _loading = true;
