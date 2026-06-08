@@ -183,6 +183,17 @@
             border-color: var(--blue);
         }
 
+        input[id^="pr_"]::-webkit-outer-spin-button,
+        input[id^="pr_"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[id^="pr_"] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
         .grid2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
