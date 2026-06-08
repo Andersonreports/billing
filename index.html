@@ -305,6 +305,7 @@
         /* action buttons */
         .action-bar {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
             padding: 13px 18px;
             border-top: 1px solid #eee;
@@ -312,7 +313,8 @@
         }
 
         .btn-preview,
-        .btn-dl {
+        .btn-dl,
+        .btn-compress {
             flex: 1;
             padding: 10px;
             border: none;
@@ -347,6 +349,21 @@
         }
 
         .btn-dl:disabled {
+            opacity: .55;
+            cursor: wait;
+        }
+
+        .btn-compress {
+            flex: 1 1 100%;
+            background: #2f6fb3;
+            color: #fff;
+        }
+
+        .btn-compress:hover {
+            opacity: .88;
+        }
+
+        .btn-compress:disabled {
             opacity: .55;
             cursor: wait;
         }
@@ -908,6 +925,7 @@
             <div class="action-bar">
                 <button class="btn-preview" onclick="openMailModal()">&#9993; Draft Mail</button>
                 <button class="btn-dl" id="dlBtn" onclick="downloadPDF()">&#11015; Download PDF</button>
+                <button class="btn-compress" id="dlBtnSmall" onclick="downloadCompressedPDF()">&#11015; Download Compressed PDF (for email)</button>
             </div>
         </aside>
         <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â  LIVE PREVIEW  Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
@@ -1442,6 +1460,38 @@
             }
             btn.disabled = false;
             btn.innerHTML = '&#11015; Download PDF';
+        }
+        async function downloadCompressedPDF() {
+            const btn = $('dlBtnSmall');
+            btn.disabled = true;
+            btn.textContent = 'Compressing...';
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4', { compress: true });
+                const A4_W = 210, A4_H = 297;
+
+                const pages = document.querySelectorAll('#quotation-doc .q-page');
+                for (let i = 0; i < pages.length; i++) {
+                    if (i > 0) pdf.addPage();
+                    const canvas = await html2canvas(pages[i], {
+                        scale: 1,
+                        useCORS: true,
+                        backgroundColor: '#ffffff',
+                        logging: false,
+                    });
+                    // JPEG at reduced quality + scale 1 keeps the file in the
+                    // tens-of-KB range instead of the multi-MB lossless PNG output
+                    pdf.addImage(canvas.toDataURL('image/jpeg', 0.5), 'JPEG', 0, 0, A4_W, A4_H, undefined, 'FAST');
+                }
+
+                const dateStr = ($('quoteDate').value || 'date').replace(/-/g, '');
+                const name = ($('toName').value || 'Client').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                pdf.save(`Anderson_Quote_${name}_${dateStr}_compressed.pdf`);
+            } catch (err) {
+                alert('Compressed PDF generation failed.\n\nError: ' + err.message);
+            }
+            btn.disabled = false;
+            btn.innerHTML = '&#11015; Download Compressed PDF (for email)';
         }
         /* Ã¢â€â‚¬Ã¢â€â‚¬ wire up all text inputs Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
         ['quoteDate', 'quoteNo', 'toName', 'toDesig', 'toDept', 'toSchool', 'toInst', 'toCity', 'toPin']
