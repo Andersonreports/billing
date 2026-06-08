@@ -925,7 +925,7 @@
             <div class="action-bar">
                 <button class="btn-preview" onclick="openMailModal()">&#9993; Draft Mail</button>
                 <button class="btn-dl" id="dlBtn" onclick="downloadPDF()">&#11015; Download PDF</button>
-                <button class="btn-compress" id="dlBtnSmall" onclick="downloadCompressedPDF()">&#11015; Download Compressed PDF (for email)</button>
+                <button class="btn-compress" id="dlBtnSmall" onclick="downloadCompressedPDF()">&#11015; Download Compressed PDF</button>
             </div>
         </aside>
         <!-- Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â  LIVE PREVIEW  Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â -->
@@ -1493,7 +1493,7 @@
                 alert('Compressed PDF generation failed.\n\nError: ' + err.message);
             }
             btn.disabled = false;
-            btn.innerHTML = '&#11015; Download Compressed PDF (for email)';
+            btn.innerHTML = '&#11015; Download Compressed PDF';
         }
         /* Ã¢â€â‚¬Ã¢â€â‚¬ wire up all text inputs Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
         ['quoteDate', 'quoteNo', 'toName', 'toDesig', 'toDept', 'toSchool', 'toInst', 'toCity', 'toPin']
