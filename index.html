@@ -1112,7 +1112,7 @@
                 </div>
                 <div class="mail-actions">
                     <button class="btn-cancel-mail" onclick="closeMailModal()">Cancel</button>
-                    <button class="btn-send-mail" onclick="sendMail()">&#9993; Send Mail</button>
+                    <button class="btn-send-mail" id="mail-send-btn" onclick="sendMail()">&#9993; Send Mail</button>
                 </div>
             </div>
         </div>
@@ -1400,7 +1400,7 @@
             document.body.style.overflow = '';
         }
 
-        function sendMail() {
+        async function sendMail() {
             const to = $('mail-to').value.trim();
             const cc = $('mail-cc').value.trim();
             const subject = $('mail-subject').value.trim();
@@ -1412,7 +1412,8 @@
                 return;
             }
 
-            // Open Gmail compose in a new tab
+            // Open Gmail compose in a new tab (must happen synchronously on the
+            // click so the popup isn't blocked — PDF generation runs after)
             const gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1'
                 + '&to=' + encodeURIComponent(to)
                 + (cc ? '&cc=' + encodeURIComponent(cc) : '')
@@ -1420,6 +1421,23 @@
                 + '&body=' + encodeURIComponent(body);
 
             window.open(gmailUrl, '_blank');
+
+            // Browsers don't let a webpage attach files to a Gmail/mailto draft —
+            // so generate the compressed PDF, download it, and tell the user to
+            // attach the downloaded file manually before sending.
+            const btn = $('mail-send-btn');
+            const originalLabel = btn.innerHTML;
+            btn.disabled = true;
+            btn.textContent = 'Preparing PDF...';
+            try {
+                const pdf = await buildCompressedPdf();
+                pdf.save(compressedPdfFileName());
+                alert('A compressed copy of the quotation PDF (' + compressedPdfFileName() + ') has been downloaded.\n\nGmail does not allow webpages to attach files automatically — please attach the downloaded PDF to the email before sending.');
+            } catch (err) {
+                alert('Could not generate the PDF automatically.\n\nUse "Download Compressed PDF" and attach it to the email manually.\n\nError: ' + err.message);
+            }
+            btn.disabled = false;
+            btn.innerHTML = originalLabel;
         }
 
         $('mail-modal').addEventListener('click', e => {
@@ -1462,33 +1480,39 @@
             btn.disabled = false;
             btn.innerHTML = '&#11015; Download PDF';
         }
+        async function buildCompressedPdf() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4', { compress: true });
+            const A4_W = 210, A4_H = 297;
+
+            const pages = document.querySelectorAll('#quotation-doc .q-page');
+            for (let i = 0; i < pages.length; i++) {
+                if (i > 0) pdf.addPage();
+                const canvas = await html2canvas(pages[i], {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                });
+                // Same capture settings as the full-quality PDF (scale 1
+                // renders a shading artifact on some pages via html2canvas) —
+                // JPEG at reduced quality is what shrinks the file size here
+                pdf.addImage(canvas.toDataURL('image/jpeg', 0.5), 'JPEG', 0, 0, A4_W, A4_H, undefined, 'FAST');
+            }
+            return pdf;
+        }
+        function compressedPdfFileName() {
+            const dateStr = ($('quoteDate').value || 'date').replace(/-/g, '');
+            const name = ($('toName').value || 'Client').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+            return `Anderson_Quote_${name}_${dateStr}_compressed.pdf`;
+        }
         async function downloadCompressedPDF() {
             const btn = $('dlBtnSmall');
             btn.disabled = true;
             btn.textContent = 'Compressing...';
             try {
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('p', 'mm', 'a4', { compress: true });
-                const A4_W = 210, A4_H = 297;
-
-                const pages = document.querySelectorAll('#quotation-doc .q-page');
-                for (let i = 0; i < pages.length; i++) {
-                    if (i > 0) pdf.addPage();
-                    const canvas = await html2canvas(pages[i], {
-                        scale: 2,
-                        useCORS: true,
-                        backgroundColor: '#ffffff',
-                        logging: false,
-                    });
-                    // Same capture settings as the full-quality PDF (scale 1
-                    // renders a shading artifact on some pages via html2canvas) —
-                    // JPEG at reduced quality is what shrinks the file size here
-                    pdf.addImage(canvas.toDataURL('image/jpeg', 0.5), 'JPEG', 0, 0, A4_W, A4_H, undefined, 'FAST');
-                }
-
-                const dateStr = ($('quoteDate').value || 'date').replace(/-/g, '');
-                const name = ($('toName').value || 'Client').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-                pdf.save(`Anderson_Quote_${name}_${dateStr}_compressed.pdf`);
+                const pdf = await buildCompressedPdf();
+                pdf.save(compressedPdfFileName());
             } catch (err) {
                 alert('Compressed PDF generation failed.\n\nError: ' + err.message);
             }
