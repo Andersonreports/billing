@@ -1132,7 +1132,7 @@
                     <label>Message</label>
                     <textarea id="mail-body"></textarea>
                 </div>
-                <div class="mail-pdf-note" id="mail-pdf-note">Preparing the quotation PDF for you to attach…</div>
+                <div class="mail-pdf-note" id="mail-pdf-note">Use "Download PDF" or "Download Compressed PDF" to get the quotation file, then attach it to this email before sending.</div>
                 <div class="mail-actions">
                     <button class="btn-cancel-mail" onclick="closeMailModal()">Cancel</button>
                     <button class="btn-send-mail" id="mail-send-btn" onclick="sendMail()">&#9993; Send Mail</button>
@@ -1416,28 +1416,6 @@
 
             $('mail-modal').classList.add('open');
             document.body.style.overflow = 'hidden';
-
-            prepareMailAttachment();
-        }
-
-        // Browsers don't let a webpage attach files to a Gmail/mailto draft —
-        // so as soon as the compose modal opens, generate and download a
-        // compressed copy of the quotation the user can attach themselves
-        // before pressing "Send Mail".
-        async function prepareMailAttachment() {
-            const note = $('mail-pdf-note');
-            note.className = 'mail-pdf-note';
-            note.textContent = 'Preparing the quotation PDF for you to attach…';
-            try {
-                const pdf = await buildCompressedPdf();
-                const fileName = compressedPdfFileName();
-                pdf.save(fileName);
-                note.className = 'mail-pdf-note ready';
-                note.textContent = '✓ Downloaded "' + fileName + '" — attach it to this email before sending.';
-            } catch (err) {
-                note.className = 'mail-pdf-note error';
-                note.textContent = 'Could not auto-generate the PDF. Use "Download Compressed PDF" and attach it manually. (' + err.message + ')';
-            }
         }
 
         function closeMailModal() {
