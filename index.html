@@ -1329,7 +1329,7 @@
             if (loc) fields.push(loc);
             $('p-to').innerHTML = fields.join('<br>') || '—';
             /* service rows in preview */
-            const poNoteRow = '<tr><td></td><td class="al" colspan="5">Purchase order must be received within 30 days.</td></tr>';
+            const poNoteRow = '<tr><td></td><td class="al" colspan="5">***Purchase order must be received within 30 days.</td></tr>';
             if (!rows.length) {
                 $('p-rows').innerHTML =
                     '<tr><td>—</td><td class="al">—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>' + poNoteRow;
