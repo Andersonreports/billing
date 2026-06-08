@@ -1016,7 +1016,6 @@
                                 <ol type="a" style="margin-top:5px">
                                     <li>Prices are quoted in Rupees and are valid for thirty (30) days after the quote
                                         date, unless stated otherwise.</li>
-                                    <li>Purchase order must be received within 30 days.</li>
                                     <li>Prices are subject to change with due consultation and represents Anderson's
                                         best estimate on the Customers project needs.</li>
                                     <li>Price is subjected to change by mutual understanding based upon availability of
@@ -1330,9 +1329,10 @@
             if (loc) fields.push(loc);
             $('p-to').innerHTML = fields.join('<br>') || '—';
             /* service rows in preview */
+            const poNoteRow = '<tr><td></td><td class="al" colspan="5">Purchase order must be received within 30 days.</td></tr>';
             if (!rows.length) {
                 $('p-rows').innerHTML =
-                    '<tr><td>—</td><td class="al">—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>';
+                    '<tr><td>—</td><td class="al">—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>' + poNoteRow;
             } else {
                 $('p-rows').innerHTML = rows.map((r, i) => `
 <tr>
@@ -1343,7 +1343,7 @@
 <td>${r.price ? inr(r.price) : '—'}</td>
 <td>${r.rowTotal ? inr(r.rowTotal) : '—'}</td>
 </tr>
-`).join('');
+`).join('') + poNoteRow;
             }
             /* totals */
             $('p-sub').textContent = inr(sub);
