@@ -676,6 +676,29 @@
             line-height: 1.6;
         }
 
+        .mail-pdf-note {
+            font-size: .8rem;
+            color: #555;
+            background: #eef3fb;
+            border: 1px solid #d0d9e8;
+            border-radius: 6px;
+            padding: 9px 12px;
+            margin-bottom: 14px;
+            line-height: 1.5;
+        }
+
+        .mail-pdf-note.ready {
+            color: #1a5d1a;
+            background: #eaf7ea;
+            border-color: #cfe8cf;
+        }
+
+        .mail-pdf-note.error {
+            color: #8a1f1f;
+            background: #fbeaea;
+            border-color: #f0caca;
+        }
+
         .mail-actions {
             display: flex;
             gap: 10px;
@@ -1110,6 +1133,7 @@
                     <label>Message</label>
                     <textarea id="mail-body"></textarea>
                 </div>
+                <div class="mail-pdf-note" id="mail-pdf-note">Preparing the quotation PDF for you to attach…</div>
                 <div class="mail-actions">
                     <button class="btn-cancel-mail" onclick="closeMailModal()">Cancel</button>
                     <button class="btn-send-mail" id="mail-send-btn" onclick="sendMail()">&#9993; Send Mail</button>
@@ -1393,6 +1417,28 @@
 
             $('mail-modal').classList.add('open');
             document.body.style.overflow = 'hidden';
+
+            prepareMailAttachment();
+        }
+
+        // Browsers don't let a webpage attach files to a Gmail/mailto draft —
+        // so as soon as the compose modal opens, generate and download a
+        // compressed copy of the quotation the user can attach themselves
+        // before pressing "Send Mail".
+        async function prepareMailAttachment() {
+            const note = $('mail-pdf-note');
+            note.className = 'mail-pdf-note';
+            note.textContent = 'Preparing the quotation PDF for you to attach…';
+            try {
+                const pdf = await buildCompressedPdf();
+                const fileName = compressedPdfFileName();
+                pdf.save(fileName);
+                note.className = 'mail-pdf-note ready';
+                note.textContent = '✓ Downloaded "' + fileName + '" — attach it to this email before sending.';
+            } catch (err) {
+                note.className = 'mail-pdf-note error';
+                note.textContent = 'Could not auto-generate the PDF. Use "Download Compressed PDF" and attach it manually. (' + err.message + ')';
+            }
         }
 
         function closeMailModal() {
@@ -1400,7 +1446,7 @@
             document.body.style.overflow = '';
         }
 
-        async function sendMail() {
+        function sendMail() {
             const to = $('mail-to').value.trim();
             const cc = $('mail-cc').value.trim();
             const subject = $('mail-subject').value.trim();
@@ -1412,8 +1458,8 @@
                 return;
             }
 
-            // Open Gmail compose in a new tab (must happen synchronously on the
-            // click so the popup isn't blocked — PDF generation runs after)
+            // The PDF was already generated and downloaded when the modal
+            // opened (see prepareMailAttachment) — sending just opens Gmail.
             const gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1'
                 + '&to=' + encodeURIComponent(to)
                 + (cc ? '&cc=' + encodeURIComponent(cc) : '')
@@ -1421,23 +1467,6 @@
                 + '&body=' + encodeURIComponent(body);
 
             window.open(gmailUrl, '_blank');
-
-            // Browsers don't let a webpage attach files to a Gmail/mailto draft —
-            // so generate the compressed PDF, download it, and tell the user to
-            // attach the downloaded file manually before sending.
-            const btn = $('mail-send-btn');
-            const originalLabel = btn.innerHTML;
-            btn.disabled = true;
-            btn.textContent = 'Preparing PDF...';
-            try {
-                const pdf = await buildCompressedPdf();
-                pdf.save(compressedPdfFileName());
-                alert('A compressed copy of the quotation PDF (' + compressedPdfFileName() + ') has been downloaded.\n\nGmail does not allow webpages to attach files automatically — please attach the downloaded PDF to the email before sending.');
-            } catch (err) {
-                alert('Could not generate the PDF automatically.\n\nUse "Download Compressed PDF" and attach it to the email manually.\n\nError: ' + err.message);
-            }
-            btn.disabled = false;
-            btn.innerHTML = originalLabel;
         }
 
         $('mail-modal').addEventListener('click', e => {
