@@ -1474,13 +1474,14 @@
                 for (let i = 0; i < pages.length; i++) {
                     if (i > 0) pdf.addPage();
                     const canvas = await html2canvas(pages[i], {
-                        scale: 1,
+                        scale: 2,
                         useCORS: true,
                         backgroundColor: '#ffffff',
                         logging: false,
                     });
-                    // JPEG at reduced quality + scale 1 keeps the file in the
-                    // tens-of-KB range instead of the multi-MB lossless PNG output
+                    // Same capture settings as the full-quality PDF (scale 1
+                    // renders a shading artifact on some pages via html2canvas) —
+                    // JPEG at reduced quality is what shrinks the file size here
                     pdf.addImage(canvas.toDataURL('image/jpeg', 0.5), 'JPEG', 0, 0, A4_W, A4_H, undefined, 'FAST');
                 }
 
