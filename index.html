@@ -851,7 +851,10 @@
                 <p>Anderson Diagnostic Services Internal Generator</p>
             </div>
         </div>
-        <button class="btn-settings" onclick="toggleSettings()">Settings</button>
+        <div style="display:flex;align-items:center;gap:10px;">
+            <button class="btn-settings" onclick="newBill()" style="background:rgba(255,80,80,0.18);border-color:rgba(255,120,120,0.5);">&#10227; New Bill</button>
+            <button class="btn-settings" onclick="toggleSettings()">Settings</button>
+        </div>
     </div>
 
     <div class="layout">
@@ -1515,6 +1518,22 @@ ${hasTAT ? `<td>${r.tat || '—'}</td>` : ''}
         /* Ã¢â€â‚¬Ã¢â€â‚¬ settings toggle Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
         function toggleSettings() {
             $('settingsPanel').classList.toggle('open');
+        }
+        function newBill() {
+            if (!confirm('Start a new bill? All current values will be cleared.')) return;
+            localStorage.removeItem(STORAGE_KEY);
+            /* clear meta fields */
+            ['quoteDate', 'quoteNo', 'toName', 'toDesig', 'toDept', 'toSchool', 'toInst', 'toCity', 'toPin', 'billNote']
+                .forEach(id => { if ($(id)) $(id).value = ''; });
+            $('quoteDate').valueAsDate = new Date();
+            /* reset service rows */
+            $('svcRows').innerHTML = '';
+            rowSeq = 0;
+            addRow();
+            /* reset extra rows */
+            $('extraRows').innerHTML = '';
+            extraSeq = 0;
+            refresh();
         }
         /* Ã¢â€â‚¬Ã¢â€â‚¬ modal preview Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
         function openPreview() {
