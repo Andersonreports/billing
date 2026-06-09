@@ -1583,12 +1583,14 @@ ${hasTAT ? `<td>${r.tat || '—'}</td>` : ''}
                     allText += tc.items.map(item => item.str).join('');
                 }
                 /* locate the embedded data block */
-                const match = allText.match(/ABILL([A-Za-z0-9+/=]+)LLIBA/);
-                if (!match) {
+                const startIdx = allText.indexOf('ABILLSTART');
+                const endIdx = allText.indexOf('ABILLEND');
+                if (startIdx === -1 || endIdx === -1) {
                     alert('No bill data found in this PDF.\n\nOnly PDFs downloaded from this tool (after the Load PDF feature was added) can be reloaded.');
                     return;
                 }
-                const data = JSON.parse(decodeURIComponent(escape(atob(match[1]))));
+                const b64 = allText.slice(startIdx + 10, endIdx).replace(/\s/g, '');
+                const data = JSON.parse(decodeURIComponent(escape(atob(b64))));
                 /* reset form, then load */
                 $('svcRows').innerHTML = '';  rowSeq = 0;
                 $('extraRows').innerHTML = ''; extraSeq = 0;
@@ -1672,6 +1674,24 @@ ${hasTAT ? `<td>${r.tat || '—'}</td>` : ''}
             if (e.target === $('modal')) closePreview();
         });
         /* Ã¢â€â‚¬Ã¢â€â‚¬ download PDF Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
+        /* embed bill data as short chunked lines while on page 1 */
+        function _embedBillData(pdf) {
+            try {
+                const billJson = localStorage.getItem(STORAGE_KEY) || '{}';
+                const b64 = btoa(unescape(encodeURIComponent(billJson)));
+                const CHUNK = 250;
+                pdf.setFontSize(3);
+                pdf.setTextColor(255, 255, 255);
+                pdf.text('ABILLSTART', 1, 265);
+                for (let i = 0, row = 1; i < b64.length; i += CHUNK, row++) {
+                    pdf.text(b64.slice(i, i + CHUNK), 1, 265 + row * 1.2);
+                }
+                const totalRows = Math.ceil(b64.length / CHUNK);
+                pdf.text('ABILLEND', 1, 265 + (totalRows + 1) * 1.2);
+                pdf.setFontSize(12);
+                pdf.setTextColor(0, 0, 0);
+            } catch (e) { console.warn('Bill embed failed:', e.message); }
+        }
         async function downloadPDF() {
             const btn = $('dlBtn');
             btn.disabled = true;
@@ -1694,16 +1714,9 @@ ${hasTAT ? `<td>${r.tat || '—'}</td>` : ''}
                     });
                     // Stretch each page canvas to fill A4 exactly
                     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, A4_W, A4_H);
+                    if (i === 0) _embedBillData(pdf); // embed while still on page 1
                 }
 
-                /* embed bill data as invisible text so the PDF can be reloaded */
-                const _billJson = localStorage.getItem(STORAGE_KEY) || '{}';
-                pdf.setPage(1);
-                pdf.setFontSize(1);
-                pdf.setTextColor(255, 255, 255);
-                pdf.text('ABILL' + btoa(unescape(encodeURIComponent(_billJson))) + 'LLIBA', 1, 295);
-                pdf.setFontSize(12);
-                pdf.setTextColor(0, 0, 0);
                 const dateStr = ($('quoteDate').value || 'date').replace(/-/g, '');
                 const name = ($('toName').value || 'Client').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
                 pdf.save(`Anderson_Quote_${name}_${dateStr}.pdf`);
@@ -1731,15 +1744,8 @@ ${hasTAT ? `<td>${r.tat || '—'}</td>` : ''}
                 // renders a shading artifact on some pages via html2canvas) —
                 // JPEG at reduced quality is what shrinks the file size here
                 pdf.addImage(canvas.toDataURL('image/jpeg', 0.5), 'JPEG', 0, 0, A4_W, A4_H, undefined, 'FAST');
+                if (i === 0) _embedBillData(pdf); // embed while still on page 1
             }
-            /* embed bill data as invisible text so the PDF can be reloaded */
-            const _billJson = localStorage.getItem(STORAGE_KEY) || '{}';
-            pdf.setPage(1);
-            pdf.setFontSize(1);
-            pdf.setTextColor(255, 255, 255);
-            pdf.text('ABILL' + btoa(unescape(encodeURIComponent(_billJson))) + 'LLIBA', 1, 295);
-            pdf.setFontSize(12);
-            pdf.setTextColor(0, 0, 0);
             return pdf;
         }
         function compressedPdfFileName() {
