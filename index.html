@@ -1588,7 +1588,7 @@ ${hasTAT ? `<td>${r.tat || '—'}</td>` : ''}
                     alert('No bill data found in this PDF.\n\nOnly PDFs downloaded from this tool (after the Load PDF feature was added) can be reloaded.');
                     return;
                 }
-                const data = JSON.parse(atob(match[1]));
+                const data = JSON.parse(decodeURIComponent(escape(atob(match[1]))));
                 /* reset form, then load */
                 $('svcRows').innerHTML = '';  rowSeq = 0;
                 $('extraRows').innerHTML = ''; extraSeq = 0;
@@ -1701,7 +1701,7 @@ ${hasTAT ? `<td>${r.tat || '—'}</td>` : ''}
                 pdf.setPage(1);
                 pdf.setFontSize(1);
                 pdf.setTextColor(255, 255, 255);
-                pdf.text('ABILL' + btoa(_billJson) + 'LLIBA', 1, 295);
+                pdf.text('ABILL' + btoa(unescape(encodeURIComponent(_billJson))) + 'LLIBA', 1, 295);
                 pdf.setFontSize(12);
                 pdf.setTextColor(0, 0, 0);
                 const dateStr = ($('quoteDate').value || 'date').replace(/-/g, '');
@@ -1737,7 +1737,7 @@ ${hasTAT ? `<td>${r.tat || '—'}</td>` : ''}
             pdf.setPage(1);
             pdf.setFontSize(1);
             pdf.setTextColor(255, 255, 255);
-            pdf.text('ABILL' + btoa(_billJson) + 'LLIBA', 1, 295);
+            pdf.text('ABILL' + btoa(unescape(encodeURIComponent(_billJson))) + 'LLIBA', 1, 295);
             pdf.setFontSize(12);
             pdf.setTextColor(0, 0, 0);
             return pdf;
