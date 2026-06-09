@@ -7,6 +7,7 @@
     <title>Anderson Research Sample Billing — Anderson Diagnostic Services</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         :root {
             --orange: #F37021;
@@ -852,6 +853,8 @@
             </div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
+            <button class="btn-settings" onclick="$('pdfLoadInput').click()" style="background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.4);">&#128196; Load PDF</button>
+            <input type="file" id="pdfLoadInput" accept=".pdf" style="display:none" onchange="loadFromPdf(this)">
             <button class="btn-settings" onclick="newBill()" style="background:rgba(255,80,80,0.18);border-color:rgba(255,120,120,0.5);">&#10227; New Bill</button>
             <button class="btn-settings" onclick="toggleSettings()">Settings</button>
         </div>
@@ -1535,6 +1538,35 @@ ${hasTAT ? `<td>${r.tat || '—'}</td>` : ''}
             extraSeq = 0;
             refresh();
         }
+        /* — Load bill data back from a previously downloaded PDF — */
+        async function loadFromPdf(input) {
+            const file = input.files[0];
+            if (!file) return;
+            input.value = '';
+            const pdfjsLib = window['pdfjs-dist/build/pdf'];
+            if (!pdfjsLib) { alert('PDF.js failed to load. Please refresh the page and try again.'); return; }
+            pdfjsLib.GlobalWorkerOptions.workerSrc =
+                'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                const meta = await pdfDoc.getMetadata();
+                const subject = meta?.info?.Subject;
+                if (!subject || subject.trim().charAt(0) !== '{') {
+                    alert('This PDF does not contain embedded bill data.\n\nOnly PDFs downloaded from this tool (after this feature was added) can be reloaded.');
+                    return;
+                }
+                const data = JSON.parse(subject);
+                /* reset current state, then load */
+                $('svcRows').innerHTML = '';  rowSeq = 0;
+                $('extraRows').innerHTML = ''; extraSeq = 0;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                loadData();
+                alert('Bill loaded successfully. You can now edit and re-download.');
+            } catch (e) {
+                alert('Failed to read bill data from PDF.\n\nError: ' + e.message);
+            }
+        }
         /* Ã¢â€â‚¬Ã¢â€â‚¬ modal preview Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
         function openPreview() {
             $('modal-body').innerHTML = $('quotation-doc').outerHTML;
@@ -1632,6 +1664,12 @@ ${hasTAT ? `<td>${r.tat || '—'}</td>` : ''}
                     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, A4_W, A4_H);
                 }
 
+                pdf.setProperties({
+                    title: 'Anderson Diagnostic Services — Quotation',
+                    subject: localStorage.getItem(STORAGE_KEY) || '{}',
+                    author: 'Anderson Diagnostic Services Pvt. Ltd.',
+                    creator: 'Anderson Billing Tool'
+                });
                 const dateStr = ($('quoteDate').value || 'date').replace(/-/g, '');
                 const name = ($('toName').value || 'Client').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
                 pdf.save(`Anderson_Quote_${name}_${dateStr}.pdf`);
@@ -1660,6 +1698,12 @@ ${hasTAT ? `<td>${r.tat || '—'}</td>` : ''}
                 // JPEG at reduced quality is what shrinks the file size here
                 pdf.addImage(canvas.toDataURL('image/jpeg', 0.5), 'JPEG', 0, 0, A4_W, A4_H, undefined, 'FAST');
             }
+            pdf.setProperties({
+                title: 'Anderson Diagnostic Services — Quotation',
+                subject: localStorage.getItem(STORAGE_KEY) || '{}',
+                author: 'Anderson Diagnostic Services Pvt. Ltd.',
+                creator: 'Anderson Billing Tool'
+            });
             return pdf;
         }
         function compressedPdfFileName() {
