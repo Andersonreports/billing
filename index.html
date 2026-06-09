@@ -1464,7 +1464,7 @@ ${hasTAT ? '<th>TAT</th>' : ''}
             /* update tfoot colspans */
             document.querySelectorAll('#quotation-doc .tfoot-label').forEach(td => { td.colSpan = 5 + extraCols; });
             const noteText = ($('billNote')?.value || '').trim();
-            const poNoteRow = noteText ? `<tr><td></td><td class="al" colspan="${5 + extraCols}">***${noteText}</td></tr>` : '';
+            const poNoteRow = `<tr><td></td><td class="al" colspan="${5 + extraCols}">**Purchase order must be received within 30 days.${noteText ? '<br>***' + noteText : ''}</td></tr>`;
             if (!rows.length) {
                 $('p-rows').innerHTML =
                     '<tr><td>—</td><td class="al">—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>' + poNoteRow;
