@@ -839,6 +839,31 @@
         .q-page {
             padding: 0 50px 40px !important;
         }
+        /* autocomplete dropdown */
+        #ac-dropdown {
+            display: none;
+            position: fixed;
+            background: #fff;
+            border: 1.5px solid var(--blue);
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            box-shadow: 0 6px 18px rgba(0,0,0,.13);
+            z-index: 9999;
+            overflow-y: auto;
+            max-height: 180px;
+        }
+        .ac-item {
+            padding: 7px 11px;
+            font-size: .82rem;
+            cursor: pointer;
+            color: #222;
+            border-bottom: 1px solid #f0f0f0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .ac-item:last-child { border-bottom: none; }
+        .ac-item:hover, .ac-item.ac-active { background: #eef3fb; color: var(--blue); }
     </style>
 </head>
 
@@ -1727,6 +1752,103 @@ ${hasTAT ? `<td>${r.tat || '—'}</td>` : ''}
         /* Ã¢â€â‚¬Ã¢â€â‚¬ wire up all text inputs Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
         ['quoteDate', 'quoteNo', 'toName', 'toDesig', 'toDept', 'toSchool', 'toInst', 'toCity', 'toPin', 'billNote']
             .forEach(id => $(id).addEventListener('input', refresh));
+
+        /* ── Autocomplete ─────────────────────────────────────────── */
+        const AC_KEY = 'anderson_billing_ac';
+        const AC_FIELDS = ['toName', 'toDesig', 'toDept', 'toSchool', 'toInst', 'toCity', 'toPin'];
+        const AC_MIN = 3; /* show suggestion after value seen >= this many times */
+        const acSessionSeen = new Set(); /* avoid double-counting within one session */
+        let acActiveField = null;
+        let acActiveIdx = -1;
+
+        function acGetData() {
+            try { return JSON.parse(localStorage.getItem(AC_KEY)) || {}; } catch { return {}; }
+        }
+        function acRecord(fieldId, value) {
+            const v = (value || '').trim();
+            if (!v) return;
+            const key = fieldId + '::' + v;
+            if (acSessionSeen.has(key)) return;
+            acSessionSeen.add(key);
+            const data = acGetData();
+            if (!data[fieldId]) data[fieldId] = {};
+            data[fieldId][v] = (data[fieldId][v] || 0) + 1;
+            localStorage.setItem(AC_KEY, JSON.stringify(data));
+        }
+        function acSuggestions(fieldId, query) {
+            const data = acGetData();
+            const map = data[fieldId] || {};
+            const q = query.trim().toLowerCase();
+            return Object.entries(map)
+                .filter(([v, c]) => c >= AC_MIN && (q === '' || v.toLowerCase().includes(q)))
+                .sort((a, b) => b[1] - a[1])
+                .map(([v]) => v)
+                .slice(0, 7);
+        }
+        function acShow(fieldId) {
+            const el = $(fieldId);
+            if (!el) return;
+            const suggestions = acSuggestions(fieldId, el.value);
+            const drop = $('ac-dropdown');
+            if (!suggestions.length) { acHide(); return; }
+            acActiveField = fieldId;
+            acActiveIdx = -1;
+            drop.innerHTML = suggestions.map((s, i) =>
+                `<div class="ac-item" data-val="${s.replace(/"/g, '&quot;')}" onmousedown="acPick('${fieldId}',this)">${s}</div>`
+            ).join('');
+            const rect = el.getBoundingClientRect();
+            drop.style.left = rect.left + 'px';
+            drop.style.top = (rect.bottom - 1) + 'px';
+            drop.style.width = rect.width + 'px';
+            drop.style.display = 'block';
+        }
+        function acHide() {
+            $('ac-dropdown').style.display = 'none';
+            acActiveField = null;
+            acActiveIdx = -1;
+        }
+        function acPick(fieldId, itemEl) {
+            const el = $(fieldId);
+            if (el) { el.value = itemEl.dataset.val; el.dispatchEvent(new Event('input')); }
+            acHide();
+        }
+        function acKeyNav(e, fieldId) {
+            const drop = $('ac-dropdown');
+            if (drop.style.display === 'none') return;
+            const items = drop.querySelectorAll('.ac-item');
+            if (!items.length) return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                acActiveIdx = Math.min(acActiveIdx + 1, items.length - 1);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                acActiveIdx = Math.max(acActiveIdx - 1, -1);
+            } else if (e.key === 'Enter' && acActiveIdx >= 0) {
+                e.preventDefault();
+                acPick(fieldId, items[acActiveIdx]);
+                return;
+            } else if (e.key === 'Escape') {
+                acHide(); return;
+            } else { return; }
+            items.forEach((it, i) => it.classList.toggle('ac-active', i === acActiveIdx));
+        }
+        /* wire up each tracked field */
+        AC_FIELDS.forEach(id => {
+            const el = $(id);
+            if (!el) return;
+            el.setAttribute('autocomplete', 'off');
+            el.addEventListener('input', () => acShow(id));
+            el.addEventListener('focus', () => acShow(id));
+            el.addEventListener('blur', () => {
+                acRecord(id, el.value);
+                setTimeout(acHide, 150); /* delay so mousedown on item fires first */
+            });
+            el.addEventListener('keydown', e => acKeyNav(e, id));
+        });
+        /* hide dropdown when clicking elsewhere */
+        document.addEventListener('mousedown', e => {
+            if (!e.target.closest('#ac-dropdown') && !AC_FIELDS.includes(e.target.id)) acHide();
+        });
         /* Ã¢â€â‚¬Ã¢â€â‚¬ init Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
         document.addEventListener('DOMContentLoaded', () => {
             if (!loadData()) {
@@ -1735,6 +1857,7 @@ ${hasTAT ? `<td>${r.tat || '—'}</td>` : ''}
             }
         });
     </script>
+    <div id="ac-dropdown"></div>
 </body>
 
 </html>
