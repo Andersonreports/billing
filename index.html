@@ -937,6 +937,20 @@
                     <div id="svcRows"></div>
                     <button class="btn-add" onclick="addRow()">+ Add Service Row</button>
                 </div>
+                <!-- Note -->
+                <div class="form-section">
+                    <div class="sec-title">Note</div>
+                    <div class="fg">
+                        <label>Bill Note <span style="font-weight:400;color:#999;font-size:.7rem">(optional — shown below service rows with ***)</span></label>
+                        <textarea id="billNote" rows="2" placeholder="e.g. Purchase order must be received within 30 days." oninput="refresh()" style="resize:vertical;min-height:52px;font-size:.83rem"></textarea>
+                    </div>
+                </div>
+                <!-- Additional Details Table -->
+                <div class="form-section">
+                    <div class="sec-title">Additional Details <span style="font-weight:400;color:#999;font-size:.7rem;text-transform:none;letter-spacing:0">(optional table)</span></div>
+                    <div id="extraRows"></div>
+                    <button class="btn-add" onclick="addExtraRow()" style="margin-top:2px">+ Add Row</button>
+                </div>
                 <!-- Summary -->
                 <div class="sum-box">
                     <div class="sum-row"><span>Sub Total</span><span id="s-sub">₹ 0</span></div>
@@ -979,7 +993,7 @@
                             </tr>
                         </table>
                         <table class="svc-table">
-                            <thead>
+                            <thead id="p-thead">
                                 <tr>
                                     <th style="width:5%">S.No</th>
                                     <th style="width:35%">Service Description</th>
@@ -1001,23 +1015,24 @@
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <td colspan="5" class="ar">Sub Total</td>
+                                    <td colspan="5" class="ar tfoot-label">Sub Total</td>
                                     <td class="ar2" id="p-sub">0</td>
                                 </tr>
                                 <tr>
-                                    <td colspan="5" class="ar">9% CGST</td>
+                                    <td colspan="5" class="ar tfoot-label">9% CGST</td>
                                     <td class="ar2" id="p-cgst">0</td>
                                 </tr>
                                 <tr>
-                                    <td colspan="5" class="ar">9% IGST</td>
+                                    <td colspan="5" class="ar tfoot-label">9% IGST</td>
                                     <td class="ar2" id="p-igst">0</td>
                                 </tr>
                                 <tr class="tot-row">
-                                    <td colspan="5" class="ar">Total Cost</td>
+                                    <td colspan="5" class="ar tfoot-label">Total Cost</td>
                                     <td class="ar2" id="p-total">0</td>
                                 </tr>
                             </tfoot>
                         </table>
+                        <div id="p-extra-table"></div>
                         <div class="sig-area">
                             <img src="Sign_sec.png" alt="Signature">
                         </div>
@@ -1161,6 +1176,7 @@
                     toInst: $('toInst').value,
                     toCity: $('toCity').value,
                     toPin: $('toPin').value,
+                    billNote: $('billNote').value,
                 },
                 settings: {
                     name: $('cfgName').value,
@@ -1172,8 +1188,11 @@
                     desc: r.desc,
                     sType: r.sType,
                     nSamples: r.nSamples,
+                    dataSize: r.dataSize,
+                    tat: r.tat,
                     price: r.price
-                }))
+                })),
+                extraRows: getExtraRows()
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         }
@@ -1218,12 +1237,30 @@
                         }
                         const st = document.getElementById('st_' + id);
                         const ns = document.getElementById('ns_' + id);
+                        const ds = document.getElementById('ds_' + id);
+                        const tatEl = document.getElementById('tat_' + id);
                         const pr = document.getElementById('pr_' + id);
                         if (st) st.value = r.sType;
                         if (ns) ns.value = r.nSamples;
+                        if (ds) ds.value = r.dataSize || '';
+                        if (tatEl) tatEl.value = r.tat || '';
                         if (pr) pr.value = r.price;
                     });
                     _loading = false;
+                }
+                if (data.extraRows && data.extraRows.length > 0) {
+                    $('extraRows').innerHTML = '';
+                    extraSeq = 0;
+                    data.extraRows.forEach(r => {
+                        addExtraRow();
+                        const id = extraSeq;
+                        const es = document.getElementById('es_' + id);
+                        const et = document.getElementById('et_' + id);
+                        const ep = document.getElementById('ep_' + id);
+                        if (es) es.value = r.sample || '';
+                        if (et) et.value = r.tokens || '';
+                        if (ep) ep.value = r.price || '';
+                    });
                 }
                 refresh();
                 return true;
@@ -1278,6 +1315,16 @@
                 <input type="number" id="ns_${id}" placeholder="e.g. 4" min="1" oninput="refresh()" onwheel="this.blur()">
             </div>
         </div>
+        <div class="grid2">
+            <div class="fg">
+                <label>Data Size <span style="font-weight:400;color:#999;font-size:.7rem">(optional)</span></label>
+                <input type="text" id="ds_${id}" placeholder="e.g. 50 GB" oninput="refresh()">
+            </div>
+            <div class="fg">
+                <label>TAT <span style="font-weight:400;color:#999;font-size:.7rem">(optional)</span></label>
+                <input type="text" id="tat_${id}" placeholder="e.g. 7 days" oninput="refresh()">
+            </div>
+        </div>
         <div class="fg">
             <label>Price per Sample (₹)</label>
             <input type="number" id="pr_${id}" placeholder="e.g. 13500" min="0" oninput="refresh()" onwheel="this.blur()">
@@ -1290,6 +1337,52 @@
         function removeRow(id) {
             $(`row_${id}`).remove();
             refresh();
+        }
+        /* — extra table rows — */
+        let extraSeq = 0;
+        function addExtraRow() {
+            extraSeq++;
+            const id = extraSeq;
+            const wrap = $('extraRows');
+            const card = document.createElement('div');
+            card.className = 'svc-card';
+            card.id = `erow_${id}`;
+            card.innerHTML = `
+<div class="svc-card-hdr">
+    <div class="row-badge">${id}</div>
+    ${id > 1 ? `<button class="btn-rm" onclick="removeExtraRow(${id})">Remove<\/button>` : '<span></span>'}
+</div>
+<div class="grid2">
+    <div class="fg">
+        <label>Sample</label>
+        <input type="text" id="es_${id}" placeholder="e.g. Sample A" oninput="refresh()">
+    </div>
+    <div class="fg">
+        <label>Tokens</label>
+        <input type="text" id="et_${id}" placeholder="e.g. TKN001" oninput="refresh()">
+    </div>
+</div>
+<div class="fg">
+    <label>Price (₹)</label>
+    <input type="number" id="ep_${id}" placeholder="e.g. 5000" min="0" oninput="refresh()" onwheel="this.blur()">
+</div>`;
+            wrap.appendChild(card);
+            refresh();
+        }
+        function removeExtraRow(id) {
+            $(`erow_${id}`).remove();
+            refresh();
+        }
+        function getExtraRows() {
+            const rows = [];
+            document.querySelectorAll('[id^="erow_"]').forEach(card => {
+                const id = card.id.split('_')[1];
+                const sample = $(`es_${id}`)?.value?.trim() || '';
+                const tokens = $(`et_${id}`)?.value?.trim() || '';
+                const price = parseFloat($(`ep_${id}`)?.value) || 0;
+                if (sample || tokens || price) rows.push({ sample, tokens, price });
+            });
+            return rows;
         }
         function toggleCustom(id) {
             const sel = $(`sd_${id}`);
@@ -1308,11 +1401,13 @@
                     : sel).replace(/&amp;/g, '&');
                 const sType = $(`st_${id}`)?.value || '';
                 const nSamples = parseFloat($(`ns_${id}`)?.value) || 0;
+                const dataSize = $(`ds_${id}`)?.value?.trim() || '';
+                const tat = $(`tat_${id}`)?.value?.trim() || '';
                 const price = parseFloat($(`pr_${id}`)?.value) || 0;
                 const rowTotal = nSamples * price;
                 const rtEl = $(`rt_${id}`);
                 if (rtEl) rtEl.textContent = `Row Total: ₹ ${inr(rowTotal)}`;
-                rows.push({ id, desc, sType, nSamples, price, rowTotal });
+                rows.push({ id, desc, sType, nSamples, dataSize, tat, price, rowTotal });
             });
             return rows;
         }
@@ -1352,7 +1447,24 @@
             if (loc) fields.push(loc);
             $('p-to').innerHTML = fields.join('<br>') || '—';
             /* service rows in preview */
-            const poNoteRow = '<tr><td></td><td class="al" colspan="5">**Purchase order must be received within 30 days.</td></tr>';
+            const hasDataSize = rows.some(r => r.dataSize);
+            const hasTAT = rows.some(r => r.tat);
+            const extraCols = (hasDataSize ? 1 : 0) + (hasTAT ? 1 : 0);
+            /* rebuild thead */
+            $('p-thead').innerHTML = `<tr>
+<th style="width:5%">S.No</th>
+<th>Service Description</th>
+<th>Sample Type</th>
+<th>No. of sample</th>
+${hasDataSize ? '<th>Data Size</th>' : ''}
+${hasTAT ? '<th>TAT</th>' : ''}
+<th>Price</th>
+<th>Total Price</th>
+</tr>`;
+            /* update tfoot colspans */
+            document.querySelectorAll('#quotation-doc .tfoot-label').forEach(td => { td.colSpan = 5 + extraCols; });
+            const noteText = ($('billNote')?.value || '').trim();
+            const poNoteRow = noteText ? `<tr><td></td><td class="al" colspan="${5 + extraCols}">***${noteText}</td></tr>` : '';
             if (!rows.length) {
                 $('p-rows').innerHTML =
                     '<tr><td>—</td><td class="al">—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>' + poNoteRow;
@@ -1363,6 +1475,8 @@
 <td class="al">${r.desc || '—'}</td>
 <td>${r.sType || '—'}</td>
 <td>${r.nSamples || '—'}</td>
+${hasDataSize ? `<td>${r.dataSize || '—'}</td>` : ''}
+${hasTAT ? `<td>${r.tat || '—'}</td>` : ''}
 <td>${r.price ? inr(r.price) : '—'}</td>
 <td>${r.rowTotal ? inr(r.rowTotal) : '—'}</td>
 </tr>
@@ -1373,7 +1487,29 @@
             $('p-cgst').textContent = inr(cgst);
             $('p-igst').textContent = inr(igst);
             $('p-total').textContent = inr(total);
-
+            /* optional extra table */
+            const extraRows = getExtraRows();
+            const extraEl = $('p-extra-table');
+            if (extraEl) {
+                if (extraRows.length) {
+                    extraEl.innerHTML = `<table class="svc-table" style="margin-top:18px">
+<thead><tr>
+<th style="width:5%">S.No</th>
+<th>Sample</th>
+<th>Tokens</th>
+<th>Price (₹)</th>
+</tr></thead>
+<tbody>${extraRows.map((r, i) => `<tr>
+<td>${i + 1}</td>
+<td class="al">${r.sample || '—'}</td>
+<td>${r.tokens || '—'}</td>
+<td>${r.price ? inr(r.price) : '—'}</td>
+</tr>`).join('')}</tbody>
+</table>`;
+                } else {
+                    extraEl.innerHTML = '';
+                }
+            }
             saveData();
         }
         /* Ã¢â€â‚¬Ã¢â€â‚¬ settings toggle Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
@@ -1526,7 +1662,7 @@
             btn.innerHTML = '&#11015; Download Compressed PDF';
         }
         /* Ã¢â€â‚¬Ã¢â€â‚¬ wire up all text inputs Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
-        ['quoteDate', 'quoteNo', 'toName', 'toDesig', 'toDept', 'toSchool', 'toInst', 'toCity', 'toPin']
+        ['quoteDate', 'quoteNo', 'toName', 'toDesig', 'toDept', 'toSchool', 'toInst', 'toCity', 'toPin', 'billNote']
             .forEach(id => $(id).addEventListener('input', refresh));
         /* Ã¢â€â‚¬Ã¢â€â‚¬ init Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
         document.addEventListener('DOMContentLoaded', () => {
