@@ -881,7 +881,6 @@
             <button class="btn-settings" onclick="$('pdfLoadInput').click()" style="background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.4);">&#128196; Load PDF</button>
             <input type="file" id="pdfLoadInput" accept=".pdf" style="display:none" onchange="loadFromPdf(this)">
             <button class="btn-settings" onclick="newBill()" style="background:rgba(255,80,80,0.18);border-color:rgba(255,120,120,0.5);">&#10227; New Bill</button>
-            <button class="btn-settings" onclick="toggleSettings()">Settings</button>
         </div>
     </div>
 
@@ -891,27 +890,6 @@
             <div class="panel-hdr">Quotation Details</div>
 
             <!-- Settings Section -->
-            <div id="settingsPanel" class="settings-panel">
-                <div class="sec-title" style="color: var(--blue);">Company Settings</div>
-                <div class="fg">
-                    <label>Company Name</label>
-                    <input type="text" id="cfgName" placeholder="Company Name" oninput="refresh()">
-                </div>
-                <div class="fg">
-                    <label>Address Line 1</label>
-                    <input type="text" id="cfgAddr1" placeholder="Address Line 1" oninput="refresh()">
-                </div>
-                <div class="fg">
-                    <label>Address Line 2</label>
-                    <input type="text" id="cfgAddr2" placeholder="Address Line 2" oninput="refresh()">
-                </div>
-                <div class="fg">
-                    <label>City & PIN</label>
-                    <input type="text" id="cfgCity" placeholder="City & PIN" oninput="refresh()">
-                </div>
-                <button class="btn-rm" onclick="toggleSettings()" style="width: 100%; margin-top: 10px;">Close
-                    Settings</button>
-            </div>
 
             <div class="form-scroll">
                 <!-- Quote Info -->
@@ -926,6 +904,26 @@
                             <label>Quote No. (optional)</label>
                             <input type="text" id="quoteNo" placeholder="e.g. Q-2025-001" />
                         </div>
+                    </div>
+                </div>
+                <!-- Quotation From -->
+                <div class="form-section">
+                    <div class="sec-title">Quotation From</div>
+                    <div class="fg">
+                        <label>Company Name</label>
+                        <input type="text" id="cfgName" placeholder="e.g. Anderson Diagnostic Services Pvt. Ltd." oninput="refresh()">
+                    </div>
+                    <div class="fg">
+                        <label>Address Line 1</label>
+                        <input type="text" id="cfgAddr1" placeholder="e.g. No.26, Rajaratnam Street, Kilpauk" oninput="refresh()">
+                    </div>
+                    <div class="fg">
+                        <label>Address Line 2 <span style="font-weight:400;color:#999;font-size:.7rem">(optional)</span></label>
+                        <input type="text" id="cfgAddr2" placeholder="e.g. Second floor" oninput="refresh()">
+                    </div>
+                    <div class="fg">
+                        <label>City &amp; PIN</label>
+                        <input type="text" id="cfgCity" placeholder="e.g. Chennai – 600 010" oninput="refresh()">
                     </div>
                 </div>
                 <!-- Quotation To -->
@@ -1544,9 +1542,6 @@ ${hasTAT ? `<td>${r.tat || '—'}</td>` : ''}
             saveData();
         }
         /* Ã¢â€â‚¬Ã¢â€â‚¬ settings toggle Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
-        function toggleSettings() {
-            $('settingsPanel').classList.toggle('open');
-        }
         function newBill() {
             if (!confirm('Start a new bill? All current values will be cleared.')) return;
             localStorage.removeItem(STORAGE_KEY);
