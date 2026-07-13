@@ -970,6 +970,10 @@
                 <div class="form-section">
                     <div class="sec-title">Note</div>
                     <div class="fg">
+                        <label>Purchase Order Days <span style="font-weight:400;color:#999;font-size:.7rem">(shown in the ** note — e.g. "must be received within 90 days")</span></label>
+                        <input type="number" id="poDays" min="0" value="30" oninput="refresh()" style="font-size:.83rem">
+                    </div>
+                    <div class="fg">
                         <label>Bill Note <span style="font-weight:400;color:#999;font-size:.7rem">(optional — shown below service rows with ***)</span></label>
                         <textarea id="billNote" rows="2" placeholder="e.g. Purchase order must be received within 30 days." oninput="refresh()" style="resize:vertical;min-height:52px;font-size:.83rem"></textarea>
                     </div>
@@ -1206,6 +1210,7 @@
                     toCity: $('toCity').value,
                     toPin: $('toPin').value,
                     billNote: $('billNote').value,
+                    poDays: $('poDays').value,
                 },
                 settings: {
                     name: $('cfgName').value,
@@ -1493,7 +1498,8 @@ ${hasTAT ? '<th>TAT</th>' : ''}
             /* update tfoot colspans */
             document.querySelectorAll('#quotation-doc .tfoot-label').forEach(td => { td.colSpan = 5 + extraCols; });
             const noteText = ($('billNote')?.value || '').trim();
-            const poNoteRow = `<tr><td></td><td class="al" colspan="${5 + extraCols}">**Purchase order must be received within 30 days.${noteText ? '<br>***' + noteText : ''}</td></tr>`;
+            const poDays = ($('poDays')?.value || '').trim() || '30';
+            const poNoteRow = `<tr><td></td><td class="al" colspan="${5 + extraCols}">**Purchase order must be received within ${poDays} days.${noteText ? '<br>***' + noteText : ''}</td></tr>`;
             if (!rows.length) {
                 $('p-rows').innerHTML =
                     '<tr><td>—</td><td class="al">—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>' + poNoteRow;
@@ -1548,6 +1554,7 @@ ${hasTAT ? `<td>${r.tat || '—'}</td>` : ''}
             /* clear meta fields */
             ['quoteDate', 'quoteNo', 'toName', 'toDesig', 'toDept', 'toSchool', 'toInst', 'toCity', 'toPin', 'billNote']
                 .forEach(id => { if ($(id)) $(id).value = ''; });
+            if ($('poDays')) $('poDays').value = '30';
             $('quoteDate').valueAsDate = new Date();
             /* reset service rows */
             $('svcRows').innerHTML = '';
@@ -1762,7 +1769,7 @@ ${hasTAT ? `<td>${r.tat || '—'}</td>` : ''}
             btn.innerHTML = '&#11015; Download Compressed PDF';
         }
         /* Ã¢â€â‚¬Ã¢â€â‚¬ wire up all text inputs Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
-        ['quoteDate', 'quoteNo', 'toName', 'toDesig', 'toDept', 'toSchool', 'toInst', 'toCity', 'toPin', 'billNote']
+        ['quoteDate', 'quoteNo', 'toName', 'toDesig', 'toDept', 'toSchool', 'toInst', 'toCity', 'toPin', 'billNote', 'poDays']
             .forEach(id => $(id).addEventListener('input', refresh));
 
         /* ── Autocomplete ─────────────────────────────────────────── */
