@@ -937,8 +937,8 @@
                 <div class="form-section">
                     <div class="sec-title" style="display:flex;align-items:center;gap:8px;">
                         <select id="toLabel" onchange="refresh()" style="width:auto;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.9px;color:var(--orange);border:none;background:transparent;padding:0;margin:0;">
-                            <option value="Quotation To">Quotation To</option>
-                            <option value="Quotation">Quotation</option>
+                            <option value="Quotation to">Quotation to</option>
+                            <option value="To">To</option>
                         </select>
                     </div>
                     <div class="fg">
@@ -1218,7 +1218,7 @@
                 meta: {
                     quoteDate: $('quoteDate').value,
                     quoteNo: $('quoteNo').value,
-                    toLabel: $('toLabel') ? $('toLabel').value : 'Quotation To',
+                    toLabel: $('toLabel') ? $('toLabel').value : 'Quotation to',
                     toName: $('toName').value,
                     toDesig: $('toDesig').value,
                     toDept: $('toDept').value,
@@ -1517,7 +1517,7 @@
             const loc = [$('toCity').value, $('toPin').value].filter(Boolean).join(', ');
             if (loc) fields.push(loc);
             $('p-to').innerHTML = fields.join('<br>') || '—';
-            if ($('p-to-label')) $('p-to-label').textContent = $('toLabel') && $('toLabel').value === 'Quotation' ? 'Quotation' : 'Quotation to';
+            if ($('p-to-label')) $('p-to-label').textContent = $('toLabel') ? $('toLabel').value : 'Quotation to';
             /* service rows in preview */
             const hasDataSize = rows.some(r => r.dataSize);
             const hasTAT = rows.some(r => r.tat);
@@ -1603,7 +1603,7 @@ ${hasB2B ? `<td>${r.b2b ? inr(r.b2b) : '—'}</td>` : ''}
             ['quoteDate', 'quoteNo', 'toName', 'toDesig', 'toDept', 'toSchool', 'toInst', 'toCity', 'toPin', 'billNote']
                 .forEach(id => { if ($(id)) $(id).value = ''; });
             if ($('poDays')) $('poDays').value = '30';
-            if ($('toLabel')) $('toLabel').value = 'Quotation To';
+            if ($('toLabel')) $('toLabel').value = 'Quotation to';
             if ($('poNoteEnabled')) $('poNoteEnabled').checked = true;
             $('quoteDate').valueAsDate = new Date();
             /* reset service rows */
